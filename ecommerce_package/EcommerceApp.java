@@ -50,20 +50,56 @@ public class EcommerceApp {
                 }
 
                 case 2: {
-                    System.out.print("Enter username: ");
-                    String loginUser = sc.nextLine().trim();
-                    System.out.print("Enter password: ");
-                    String loginPass = sc.nextLine().trim();
+                    System.out.print("Enter Product ID to buy: ");
+                    int pid = Integer.parseInt(sc.nextLine().trim());
+                    System.out.print("Enter quantity: ");
+                    int qty = Integer.parseInt(sc.nextLine().trim());
 
-                    UserData user = customerData.login(loginUser, loginPass);
-                    if (user != null) {
-                        System.out.println("✅ Welcome, " + user.getUsername());
-                        customerMenu(sc, productData, orderService, user);
+                    Product product = productData.getProductById(pid);
+                    if (product == null) {
+                        System.out.println("❌ Product not found!");
+                        break;
+                    }
+
+                    double totalPrice = product.getPrice() * qty; // ✅ calculate total price
+                    System.out.printf("Total price: ₹%.2f%n", totalPrice);
+
+                    // Ask for payment method (new addition)
+                    System.out.println("Select Payment Mode:");
+                    System.out.println("1. UPI");
+                    System.out.println("2. Cash on Delivery");
+                    System.out.println("3. Card");
+                    System.out.print("Enter choice: ");
+                    int payChoice = Integer.parseInt(sc.nextLine().trim());
+
+                    String paymentMode = switch (payChoice) {
+                        case 1 -> "UPI";
+                        case 2 -> "Cash on Delivery";
+                        case 3 -> "Card";
+                        default -> "Unknown";
+                    };
+
+                    // Create a simple cart map with single item
+                    Map<Integer, Integer> cart = new HashMap<>();
+                    cart.put(pid, qty);
+
+                    String orderId = orderService.placeOrder(user.getUserId(), cart);
+                    if (orderId != null) {
+                        System.out.println("✅ Payment Successful via " + paymentMode);
+                        System.out.println("✅ Order placed. Order ID: " + orderId);
+
+                        // Convert cart to product details for invoice
+                        Map<Product, Integer> itemDetails = new HashMap<>();
+                        itemDetails.put(product, qty);
+
+                        // ✅ Generate Invoice
+                        InvoiceGenerator.generateInvoice(orderId, user, itemDetails, totalPrice, paymentMode);
                     } else {
-                        System.out.println("❌ Invalid credentials!");
+                        System.out.println("❌ Order failed. Check stock or DB.");
                     }
                     break;
                 }
+
 
                 case 3: {
                     List<Product> products = productData.getAllProducts();
@@ -143,9 +179,27 @@ public class EcommerceApp {
                     String orderId = orderService.placeOrder(user.getUserId(), cart);
                     if (orderId != null) {
                         System.out.println("✅ Order placed. Order ID: " + orderId);
+
+                        // Ask for payment mode
+                        System.out.print("Enter payment mode (UPI / COD / Card): ");
+                        String paymentMode = sc.nextLine().trim();
+
+                        // Convert cart<Integer, Integer> → itemDetails<Product, Integer>
+                        Map<Product, Integer> itemDetails = new HashMap<>();
+                        for (Map.Entry<Integer, Integer> entry : cart.entrySet()) {
+                            Product p = productData.getProductById(entry.getKey());
+                            if (p != null) {
+                                itemDetails.put(p, entry.getValue());
+                            }
+                        }
+
+                        // ✅ Generate Invoice
+                        InvoiceGenerator.generateInvoice(orderId, user, itemDetails, totalPrice, paymentMode);
+
                     } else {
                         System.out.println("❌ Order failed. Check stock or DB.");
                     }
+
                     break;
                 }
 

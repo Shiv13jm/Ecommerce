@@ -1,19 +1,27 @@
 package ecommerce_package;
 
+import java.util.Map;
 
-	
-	
+public class InvoiceGenerator {
+    public static void generateInvoice(String orderId, UserData user, 
+                                       Map<Product, Integer> items, 
+                                       double total, String paymentMode) {
+        System.out.println("\n===== INVOICE =====");
+        System.out.println("Order ID: " + orderId);
+        System.out.println("Customer: " + user.getUsername() + " (ID: " + user.getUserId() + ")");
+        System.out.println("Email: " + user.getEmail());
+        System.out.println("---------------------------");
 
-	import java.util.Map;
+        for (Map.Entry<Product, Integer> entry : items.entrySet()) {
+            Product p = entry.getKey();
+            int qty = entry.getValue();
+            double lineTotal = p.getPrice() * qty;
+            System.out.printf("%s (x%d) - ₹%.2f%n", p.getName(), qty, lineTotal);
+        }
 
-	public class InvoiceGenerator {
-	    public static void generateInvoice(String orderId, int userId, Map<Integer,Integer> items, double total) {
-	        System.out.println("Invoice for Order ID: " + orderId);
-	        System.out.println("Customer: " + userId);
-	        System.out.println("Items: " + items.toString());
-	        System.out.println("Total: " + total);
-	    }
-	}
-
-
-
+        System.out.println("---------------------------");
+        System.out.printf("Total: ₹%.2f%n", total);
+        System.out.println("Payment Mode: " + paymentMode);
+        System.out.println("===== THANK YOU! =====\n");
+    }
+}
